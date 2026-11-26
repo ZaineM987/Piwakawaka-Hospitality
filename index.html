@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pīwakawaka's Advanced Hospitality Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Advanced Culinary Typography: Fraunces for warm, artisanal bistro headings, Plus Jakarta Sans for crisp modern legibility -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #fffbeb; /* Warm vanilla cream */
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; 
+            /* QA Fix: Use pan-y at root so W3C ancestor touch-action intersection never blocks mobile vertical scrolling */
+            touch-action: pan-y; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            /* Prevent mobile pull-to-refresh which disrupts the app state */
+            overscroll-behavior-y: none;
+        }
+        
+        h1, h2, h3, .serif-heading {
+            font-family: 'Fraunces', serif;
+        }
+        
+        /* Subtle artisanal bistro tablecloth grid pattern */
+        .bistro-grid {
+            background-image: 
+                linear-gradient(to right, rgba(217, 119, 6, 0.08) 2px, transparent 2px),
+                linear-gradient(to bottom, rgba(217, 119, 6, 0.08) 2px, transparent 2px);
+            background-size: 44px 44px;
+            z-index: 0;
+        }
+
+        .animate-float { animation: float 4s ease-in-out infinite; transform-origin: bottom center; }
+        @keyframes float { 0% { transform: translateY(0px) scale(1) rotate(-1deg); } 50% { transform: translateY(-12px) scale(1.02) rotate(1deg); } 100% { transform: translateY(0px) scale(1) rotate(-1deg); } }
+        
+        .animate-bounce-fast { animation: bounce-fast 0.6s infinite; }
+        @keyframes bounce-fast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        
+        .animate-pulse-glow { animation: pulse-glow 2.5s infinite alternate; }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); } 100% { box-shadow: 0 0 35px rgba(225, 29, 72, 0.65); } }
+        
+        .game-btn { box-shadow: 0 6px 0px rgba(0,0,0,0.15); transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .game-btn:active:not(:disabled) { transform: translateY(6px) !important; box-shadow: 0 0px 0px rgba(0,0,0,0.15) !important; }
+        .level-locked { filter: grayscale(100%) opacity(0.6); pointer-events: none; }
+        
+        .error-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+        
+        .screen-container { transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease-in-out; }
+        .slide-in-right { transform: translateX(0%); opacity: 1; pointer-events: auto; }
+        .slide-out-left { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+        .slide-out-right { transform: translateX(100%); opacity: 0; pointer-events: none; }
+        
+        .particle { position: absolute; pointer-events: none; animation: pop 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards; z-index: 100; font-size: 2rem; }
+        @keyframes pop { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(1.5) rotate(var(--rot)); opacity: 0; } }
+        
+        .star-filled { filter: grayscale(0%) opacity(1) drop-shadow(0 0 6px #f59e0b); transform: scale(1.15); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .star-empty { filter: grayscale(100%) opacity(0.4); transform: scale(0.9); transition: all 0.3s; }
+        
+        /* Mobile Scroll System - Ensuring content and 3rd option buttons are never trapped off-screen */
+        .scroll-area { 
+            -webkit-overflow-scrolling: touch; 
+            overscroll-behavior-y: contain; 
+            touch-action: pan-y !important; 
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .scroll-area * {
+            touch-action: pan-y !important;
+        }
+
+        .scroll-area::-webkit-scrollbar { width: 10px; }
+        .scroll-area::-webkit-scrollbar-track { background: rgba(217, 119, 6, 0.1); border-radius: 10px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.5); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+        
+        .tts-active { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.5); border-color: #f59e0b !important; transform: scale(1.02); transition: all 0.3s ease-in-out; }
+        
+        .speech-bubble { position: relative; }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); border-width: 20px 20px 0; border-style: solid; border-color: white transparent transparent transparent; display: block; width: 0; z-index: 1; }
+        .speech-bubble::before { content: ''; position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); border-width: 26px 26px 0; border-style: solid; border-color: #fcd34d transparent transparent transparent; display: block; width: 0; z-index: 0; }
+        
+        .nature-element { position: absolute; opacity: 0.45; animation: drift linear infinite; pointer-events: none; z-index: 0; font-size: 3rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        @keyframes drift { from { transform: translateX(-20vw) rotate(0deg); } to { transform: translateX(120vw) rotate(360deg); } }
+        
+        .natural-sun { position: absolute; top: -10%; left: -10%; width: 320px; height: 320px; background: radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; animation: pulse-sun 5s infinite alternate; pointer-events: none; z-index: 0; }
+        @keyframes pulse-sun { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
+        
+        #level-visual div { font-size: 4.5rem !important; line-height: 1 !important; }
+        @media (min-width: 640px) { #level-visual div { font-size: 7rem !important; } }
+    </style>
+</head>
+<body>
+
+    <!-- Bistro Background with Floating Culinary Elements -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden bistro-grid">
+        <div class="natural-sun"></div>
+        <div class="nature-element" style="top: 14%; animation-duration: 45s; font-size: 4rem;">🥐</div>
+        <div class="nature-element" style="top: 34%; animation-duration: 60s; animation-delay: -20s; font-size: 3.5rem;">🍳</div>
+        <div class="nature-element" style="top: 56%; animation-duration: 50s; animation-delay: -10s; font-size: 4.5rem;">🧁</div>
+        <div class="nature-element" style="top: 76%; animation-duration: 70s; animation-delay: -30s; font-size: 3.5rem;">🍓</div>
+        <div class="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-amber-100/80 to-transparent opacity-70"></div>
+    </div>
+
+    <!-- Animal SVGs -->
+    <template id="svg-piwakawaka"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M40,55 C40,40 50,30 65,30 C75,30 80,40 75,55 C70,70 50,75 40,55 Z" fill="#8B5A2B"/><path d="M60,35 C70,35 75,45 70,55 Z" fill="#4A3020"/><ellipse cx="55" cy="50" rx="15" ry="10" fill="#E6DCC8"/><path d="M75,45 L85,42 L78,50 Z" fill="#333"/><circle cx="65" cy="40" r="3" fill="#000"/><circle cx="66" cy="39" r="1" fill="#fff"/><path d="M45,55 C20,40 10,60 15,80 C30,70 45,75 55,65 Z" fill="#A08060"/><path d="M15,80 C25,85 45,85 55,75" fill="none" stroke="#fff" stroke-width="2"/><path d="M50,70 L45,85 M55,70 L55,85" stroke="#333" stroke-width="2"/></svg></template>
+    <template id="svg-kekeno"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M10,85 C30,95 70,95 80,70 C90,40 75,20 60,25 C50,28 45,45 35,55 C20,70 10,70 10,85 Z" fill="#4a4441"/><path d="M40,70 C50,85 70,80 60,65 Z" fill="#302c2a"/><circle cx="65" cy="35" r="3" fill="#000"/><circle cx="80" cy="32" r="4" fill="#1a1a1a"/><path d="M82,35 L95,40 M82,38 L93,45" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></template>
+    <template id="svg-kiwi"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M40,75 L40,90 M35,90 L45,90 M60,75 L60,90 M55,90 L65,90" stroke="#d97736" stroke-width="4" stroke-linecap="round"/><ellipse cx="50" cy="55" rx="35" ry="25" fill="#5c4033"/><circle cx="25" cy="45" r="15" fill="#5c4033"/><path d="M12,50 Q5,65 2,80" stroke="#e8c39e" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="20" cy="42" r="2.5" fill="#000"/></svg></template>
+    <template id="svg-huntaway"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M30,90 L30,50 C30,30 50,30 60,35 C75,40 85,50 85,70 L85,90 Z" fill="#111111"/><path d="M60,65 C75,65 85,75 85,90 L60,90 Z" fill="#c47029"/><circle cx="55" cy="40" r="4" fill="#c47029"/><path d="M75,55 C85,55 85,65 85,70 C75,70 70,65 75,55 Z" fill="#c47029"/><path d="M35,35 C25,45 25,60 35,55 Z" fill="#111111"/><circle cx="85" cy="55" r="3" fill="#000"/><circle cx="65" cy="45" r="2.5" fill="#fff"/><circle cx="66" cy="45" r="1.5" fill="#000"/></svg></template>
+    <template id="svg-kea"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M40,80 L40,90 M55,80 L55,90" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="M20,60 L5,85 L25,75 Z" fill="#4d5e3c"/><ellipse cx="45" cy="55" rx="25" ry="30" fill="#5e6b45"/><path d="M35,45 C50,45 65,70 45,80 Z" fill="#5e6b45"/><path d="M40,55 C55,55 60,70 45,75 Z" fill="#d95e16"/><circle cx="60" cy="35" r="18" fill="#5e6b45"/><path d="M75,30 C90,30 90,50 80,55 C85,45 80,40 75,40 Z" fill="#4a4a4a"/><circle cx="65" cy="32" r="2.5" fill="#000"/><circle cx="55" cy="40" r="4" fill="#d95e16" opacity="0.6"/></svg></template>
+    <template id="svg-whio"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><ellipse cx="50" cy="60" rx="35" ry="25" fill="#5A6B7C"/><circle cx="75" cy="40" r="15" fill="#5A6B7C"/><path d="M70,55 Q80,80 40,85 Z" fill="#8B4513"/><path d="M85,35 Q98,40 88,45 Z" fill="#E6DCC8"/><circle cx="78" cy="35" r="2.5" fill="#000"/></svg></template>
+    <template id="svg-tui"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><path d="M30,80 Q50,90 65,70 Q75,40 60,30 Q40,30 30,50 Z" fill="#1A2B3C"/><circle cx="55" cy="60" r="6" fill="#FFF" filter="drop-shadow(0 2px 2px rgba(0,0,0,0.3))"/><circle cx="65" cy="35" r="2" fill="#000"/><path d="M68,32 Q85,35 68,40 Z" fill="#111"/></svg></template>
+    <template id="svg-ruru"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><ellipse cx="50" cy="65" rx="30" ry="25" fill="#5C4033"/><circle cx="50" cy="35" r="22" fill="#4A3020"/><circle cx="40" cy="35" r="8" fill="#F4C430"/><circle cx="60" cy="35" r="8" fill="#F4C430"/><circle cx="40" cy="35" r="3" fill="#000"/><circle cx="60" cy="35" r="3" fill="#000"/><path d="M45,45 L55,45 L50,55 Z" fill="#111"/></svg></template>
+    <template id="svg-takahe"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><ellipse cx="45" cy="60" rx="35" ry="30" fill="#204070"/><ellipse cx="70" cy="40" rx="15" ry="18" fill="#204070"/><path d="M80,30 Q95,45 80,55 Z" fill="#C03030"/><circle cx="75" cy="35" r="2.5" fill="#000"/><path d="M35,80 L35,95 M55,80 L55,95" stroke="#C03030" stroke-width="4"/></svg></template>
+    <template id="svg-kakapo"><svg viewBox="0 0 100 100" class="w-32 h-32 sm:w-48 sm:h-48 drop-shadow-2xl"><ellipse cx="50" cy="55" rx="35" ry="40" fill="#557B3E"/><circle cx="50" cy="35" r="20" fill="#759A4E"/><path d="M45,40 L55,40 L50,50 Z" fill="#B0A080"/><circle cx="42" cy="32" r="2" fill="#000"/><circle cx="58" cy="32" r="2" fill="#000"/><path d="M15,55 Q5,70 15,85" stroke="#446130" stroke-width="3" fill="none"/></svg></template>
+
+    <!-- Mobile-Optimized Top Controls -->
+    <div class="absolute top-2 sm:top-4 right-2 sm:right-4 z-[60] flex gap-1.5 sm:gap-3 pointer-events-auto items-center">
+        <button id="btn-educator" class="game-btn bg-amber-600 hover:bg-amber-500 text-white rounded-full w-11 h-11 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-3xl border-2 sm:border-4 border-white shadow-lg" title="Educator Notes">🎓</button>
+        <button id="btn-music" class="game-btn bg-rose-500 hover:bg-rose-400 text-white rounded-full w-11 h-11 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-3xl border-2 sm:border-4 border-white shadow-lg" title="Toggle Music">🎵</button>
+        <button id="btn-speed" class="game-btn bg-emerald-500 hover:bg-emerald-400 text-white rounded-full px-3 sm:px-5 h-11 sm:h-16 flex items-center justify-center gap-1 sm:gap-1.5 text-lg sm:text-2xl font-extrabold border-2 sm:border-4 border-white shadow-lg" title="Voice Speed: Storytime Slow (Tap to change)">
+            <span id="speed-icon">🐢</span>
+            <span id="speed-label" class="text-xs sm:text-base tracking-tight">Slow</span>
+        </button>
+        <button id="btn-speech" class="game-btn bg-orange-500 hover:bg-orange-400 text-white rounded-full w-11 h-11 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-3xl border-2 sm:border-4 border-white shadow-lg" title="Read Aloud">🔊</button>
+    </div>
+
+    <!-- MAIN HUB SCREEN -->
+    <div id="screen-hub" class="screen-container slide-in-right absolute inset-0 flex flex-col items-center pt-16 sm:pt-20 pb-4 z-20 pointer-events-none">
+        <div class="bg-white/95 p-5 sm:p-8 rounded-3xl shadow-2xl border-4 border-amber-300 mb-4 sm:mb-6 text-center max-w-3xl mx-4 z-10 shrink-0 mt-2 sm:mt-0 relative overflow-hidden pointer-events-auto">
+            <div class="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-amber-500 via-rose-500 to-emerald-500"></div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-2">
+                <span>👨‍🍳</span> Advanced Trades: Culinary &amp; Hospitality
+            </div>
+            <h1 class="text-2xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 mb-2 sm:mb-3 drop-shadow-sm serif-heading">Pīwakawaka's Advanced Hospitality Journey</h1>
+            <p class="text-amber-900 text-base sm:text-2xl font-bold" id="hub-instruction">Kia ora! Put on your apron, it's time to make flavor magic and welcome our guests!</p>
+        </div>
+        <div id="map-nodes" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 relative z-10 w-full max-w-5xl px-4 overflow-y-auto scroll-area flex-1 min-h-0 pb-36 sm:pb-16 pointer-events-auto"></div>
+    </div>
+
+    <!-- LEVEL PLAY SCREEN -->
+    <div id="screen-level" class="screen-container slide-out-right absolute inset-0 flex flex-col z-10 pt-16 sm:pt-24 pointer-events-none">
+        
+        <div class="absolute top-2 sm:top-4 left-2 sm:left-4 z-50 flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-4 pointer-events-auto max-w-[46%] sm:max-w-[50%]">
+            <button id="btn-back" class="game-btn bg-rose-600 hover:bg-rose-500 text-white rounded-full px-3.5 py-1.5 sm:px-8 sm:py-3 font-extrabold text-sm sm:text-2xl border-2 sm:border-4 border-white whitespace-nowrap shadow-lg">⬅️ Menu Map</button>
+            <div id="level-progress" class="bg-white/95 rounded-full px-3 sm:px-5 py-1.5 sm:py-3 flex items-center gap-1 sm:gap-2 shadow-lg border-2 border-amber-300 min-h-[34px] sm:min-h-[52px] flex-wrap"></div>
+        </div>
+
+        <div class="relative flex-1 min-h-0 flex flex-col items-center justify-start p-3 sm:p-8 overflow-y-auto scroll-area z-10 w-full pointer-events-auto" id="level-playarea">
+            <div class="flex flex-col items-center justify-center w-full relative shrink-0 max-w-4xl mx-auto mt-2 sm:mt-0">
+                <div id="instruction-box" class="speech-bubble bg-white p-5 sm:p-10 rounded-3xl shadow-xl border-8 border-amber-300 text-center w-full mb-6 sm:mb-10 transition-all duration-300 z-20 cursor-pointer" title="Tap to hear question">
+                    <p id="level-instruction" class="text-xl sm:text-4xl font-black text-stone-800 leading-snug serif-heading"></p>
+                </div>
+                <div id="level-character" class="mb-2 sm:mb-4 z-10 transform scale-90 sm:scale-125 origin-bottom filter drop-shadow-2xl"></div>
+                <div id="level-visual" class="bg-white/95 p-5 sm:p-8 rounded-full shadow-lg border-4 border-amber-200 font-black text-stone-800 text-center flex items-center justify-center min-w-[110px] min-h-[110px] sm:min-w-[120px] sm:min-h-[120px] mb-4 sm:mb-8 transition-transform duration-200 animate-pulse-glow"></div>
+                
+                <!-- Helpful Mobile Scroll Hint -->
+                <div class="text-amber-800/80 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-3 flex items-center gap-1.5 bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200">
+                    <span>↕️</span> Swipe up &amp; down to see all 3 choices
+                </div>
+            </div>
+            
+            <div id="level-options" class="flex flex-col w-full max-w-3xl gap-3.5 sm:gap-6 shrink-0 px-1 sm:px-2"></div>
+            
+            <!-- Generous bottom spacer so smartphone users can effortlessly scroll the 3rd option well into view -->
+            <div class="w-full h-[45svh] shrink-0 pointer-events-none"></div>
+        </div>
+        
+        <div id="loading-overlay" class="absolute inset-0 bg-amber-950/80 backdrop-blur-md z-[55] hidden flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-auto">
+            <div class="text-7xl animate-bounce mb-6">👨‍🍳</div>
+            <h3 class="text-3xl sm:text-4xl font-black text-amber-100 bg-amber-800/90 px-8 sm:px-10 py-4 rounded-full shadow-2xl border-4 border-amber-400 serif-heading">Plating Next Dish...</h3>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div id="modal-success" class="absolute inset-0 bg-stone-900/60 flex items-center justify-center z-[70] hidden backdrop-blur-md pointer-events-auto">
+        <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl border-8 border-amber-400 text-center max-w-md mx-4 transform transition-transform scale-90" id="success-box">
+            <div class="text-8xl mb-6 animate-bounce">🍽️</div>
+            <h2 class="text-4xl font-black text-amber-600 mb-4 serif-heading" id="success-title">Ka pai! Delicious job!</h2>
+            <p class="text-2xl font-bold text-stone-700 mb-8" id="success-msg">Course Served! Level Complete!</p>
+            <button id="btn-next" class="game-btn bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-2xl sm:text-3xl py-4 sm:py-5 px-8 sm:px-10 rounded-full border-4 border-white w-full shadow-lg">Next Course!</button>
+        </div>
+    </div>
+
+    <!-- FINALE MODAL -->
+    <div id="modal-finale" class="absolute inset-0 bg-stone-900/80 flex items-center justify-center z-[70] hidden backdrop-blur-md pointer-events-auto">
+        <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl border-8 border-rose-500 text-center max-w-lg mx-4 transform transition-transform scale-90 relative overflow-hidden" id="finale-box">
+            <div class="absolute inset-0 bistro-grid opacity-30 pointer-events-none"></div>
+            <div class="text-8xl sm:text-9xl mb-6 animate-bounce relative z-10">👨‍🍳🎂👑</div>
+            <h2 class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-rose-600 mb-4 relative z-10 serif-heading">Tino Pai Rawa Atu!</h2>
+            <p class="text-xl sm:text-2xl font-bold text-stone-700 mb-8 relative z-10">You completed the Advanced Hospitality Journey! You are a Master Host and Flavor Wizard!</p>
+            <button id="btn-restart" class="game-btn bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-2xl sm:text-3xl py-4 sm:py-5 px-8 sm:px-10 rounded-full border-4 border-white w-full shadow-xl relative z-10">Cook Again!</button>
+        </div>
+    </div>
+
+    <!-- EDUCATOR MODAL -->
+    <div id="modal-educator" class="absolute inset-0 bg-stone-900/60 flex items-center justify-center z-[80] hidden backdrop-blur-md pointer-events-auto">
+        <div class="bg-white p-6 sm:p-10 rounded-3xl shadow-2xl border-8 border-amber-500 max-w-3xl mx-4 transform transition-transform scale-90 max-h-[90vh] overflow-y-auto scroll-area" id="educator-box">
+            <h2 class="text-3xl sm:text-4xl font-black text-amber-700 mb-6 text-center serif-heading">Educator Notes: Hospitality &amp; Pedagogy</h2>
+            <div class="text-stone-800 space-y-5 mb-8 text-base sm:text-xl font-medium">
+                <p>This application integrates <strong>50 Advanced Hospitality, Food &amp; Beverage Concepts</strong> designed to introduce 4-to-6-year-olds to the culinary arts, empathy, teamwork, and kitchen safety.</p>
+                <p>By framing cooking as <em>"flavor magic"</em> and serving as the <em>"art of making people smile,"</em> children learn the joy of sharing a meal and caring for others through <strong>Cognitive Load Theory (CLT)</strong>:</p>
+                <ul class="list-disc pl-8 space-y-3 font-bold">
+                    <li><strong>Advanced Culinary Typography &amp; Palette:</strong> Uses warm, high-contrast bistro aesthetics with <em>Fraunces</em> display headings and <em>Plus Jakarta Sans</em> body text for effortless reading.</li>
+                    <li><strong>Smartphone-First Experiential Scrolling:</strong> Root-level <code>touch-action: pan-y</code> compliance and a 45svh bottom buffer ensure that even lengthy multi-line answer options are never cut off on smaller phone screens.</li>
+                    <li><strong>Managing Intrinsic Load:</strong> Real-world trades concepts (Front vs. Back of House, Brigade teamwork, Zero Waste, Allergies, and Food Safety) are taught via relatable childhood metaphors.</li>
+                    <li><strong>Modality Effect &amp; Storytime Pacing:</strong> The Text-to-Speech (TTS) channel reads both questions and individual answer options aloud at a gentle, child-friendly pace with natural breathing pauses and a top-bar speed toggle (<strong>🐢 Slow</strong>, <strong>🐌 Extra Slow</strong>, <strong>🐇 Normal</strong>).</li>
+                </ul>
+            </div>
+            <button id="btn-close-educator" class="game-btn bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-2xl py-4 px-8 rounded-full border-4 border-white w-full text-center shadow-lg">Back to the Kitchen!</button>
+        </div>
+    </div>
+
+    <script>
+        const GameState = {
+            unlockedLevel: 1,
+            currentLevelObj: null,
+            currentScreen: 'hub',
+            currentQuestionIndex: 0,
+            isTransitioning: false
+        };
+
+        let loaderTimeoutId = null;
+        function hideLoadingOverlayImmediate() {
+            if (loaderTimeoutId) {
+                clearTimeout(loaderTimeoutId);
+                loaderTimeoutId = null;
+            }
+            const loader = document.getElementById('loading-overlay');
+            if (loader) {
+                loader.classList.add('opacity-0', 'hidden');
+                loader.classList.remove('pointer-events-auto');
+            }
+        }
+
+        // Child-centric Speech Pacing controller (defaults to Storytime Slow for 4-to-6-year-olds)
+        const SpeechPacing = {
+            modes: [
+                { rate: 0.76, pauseMs: 420, label: 'Slow', icon: '🐢', title: 'Voice Speed: Storytime Slow (Best for 4-6 yrs)' },
+                { rate: 0.68, pauseMs: 520, label: 'Extra Slow', icon: '🐌', title: 'Voice Speed: Extra Gentle' },
+                { rate: 0.86, pauseMs: 300, label: 'Normal', icon: '🐇', title: 'Voice Speed: Relaxed Normal' }
+            ],
+            currentIndex: 0,
+            get current() { return this.modes[this.currentIndex]; },
+            cycle() {
+                this.currentIndex = (this.currentIndex + 1) % this.modes.length;
+                return this.current;
+            }
+        };
+
+        const SoundManager = {
+            isMusicPlaying: false, initialized: false, bgMusic: null, bgParts: [], uiSynth: null, fxSynth: null, errorSynth: null,
+            init() {
+                if(this.initialized) return;
+                
+                this.uiSynth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }}).toDestination();
+                this.uiSynth.volume.value = -12;
+                
+                this.fxSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 1 }}).toDestination();
+                this.fxSynth.volume.value = -10;
+                
+                this.errorSynth = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 2, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 }}).toDestination();
+                this.errorSynth.volume.value = -8;
+                
+                this.bgMusic = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.2, decay: 0.3, sustain: 0.2, release: 1 }}).toDestination();
+                this.bgMusic.volume.value = -25;
+                
+                const melodies = [
+                    [{"time": "0:0:0", "note": "C4", "dur": "4n"}, {"time": "0:1:0", "note": "E4", "dur": "4n"}, {"time": "0:2:0", "note": "G4", "dur": "2n"}],
+                    [{"time": "0:0:0", "note": "F4", "dur": "4n"}, {"time": "0:1:0", "note": "A4", "dur": "4n"}, {"time": "0:2:0", "note": "G4", "dur": "2n"}],
+                ];
+
+                this.bgParts = melodies.map(mel => {
+                    const part = new Tone.Part((time, value) => {
+                        this.bgMusic.triggerAttackRelease(value.note, value.dur, time);
+                    }, mel);
+                    part.loop = true; part.loopEnd = "1m"; return part;
+                });
+
+                Tone.Transport.loop = true; Tone.Transport.loopEnd = "8m";
+                this.bgParts[0].start("0m").stop("4m");
+                this.bgParts[1].start("4m").stop("8m");
+                Tone.Transport.bpm.value = 95; 
+                this.initialized = true;
+            },
+            playClick() { if(this.isMusicPlaying && Tone.context && Tone.context.state === 'running') this.uiSynth.triggerAttackRelease("A5", "32n"); },
+            playSuccess() { 
+                if(this.isMusicPlaying && Tone.context && Tone.context.state === 'running') {
+                    const now = Tone.now();
+                    this.fxSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
+                } 
+            },
+            playError() { if(this.isMusicPlaying && Tone.context && Tone.context.state === 'running') this.errorSynth.triggerAttackRelease("C2", "8n"); },
+            async toggleMusic() {
+                if(!this.initialized) { await Tone.start(); this.init(); }
+                const btn = document.getElementById('btn-music');
+                if (this.isMusicPlaying) { Tone.Transport.pause(); btn.classList.replace('bg-rose-600', 'bg-rose-500'); this.isMusicPlaying = false; } 
+                else { Tone.Transport.start(); btn.classList.replace('bg-rose-500', 'bg-rose-600'); this.isMusicPlaying = true; }
+            }
+        };
+
+        let currentVoice = null;
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices.length) return;
+            
+            const preferredNames = ['Google UK', 'Google US', 'Samantha', 'Hazel', 'Catherine', 'Gordon', 'Daniel', 'Karen', 'Moira'];
+            currentVoice = voices.find(v => v.lang.toLowerCase().startsWith('en') && preferredNames.some(name => v.name.includes(name)));
+            
+            if (!currentVoice) {
+                currentVoice = voices.find(v => {
+                    const normalizedLang = v.lang.replace('_', '-').toLowerCase();
+                    return ['en-gb', 'en-us', 'en-nz', 'en-au'].includes(normalizedLang);
+                });
+            }
+            if (!currentVoice) currentVoice = voices.find(v => v.lang.toLowerCase().startsWith('en'));
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
+
+        const levelsData = [
+            { id: 1, title: "1. The Seed: Basics 1", icon: "🤗", subject: "Welcome & The Kitchen", characterId: "svg-piwakawaka", questions: [
+                { instruction: "What is Hospitality?", visualHTML: `<div class="text-8xl">🤗</div>`, options: ["It is the beautiful art of making someone feel incredibly welcome and cozy, like a warm hug", "It is a game where you hide under the table", "It is a loud race car"], correctAnswer: "It is the beautiful art of making someone feel incredibly welcome and cozy, like a warm hug", successMsg: "Ka pai! Hospitality is making people feel welcome and cozy." },
+                { instruction: "Who is the Guest?", visualHTML: `<div class="text-8xl">🪑</div>`, options: ["A friend or visitor who comes to your house or restaurant to eat and relax", "A bird flying high in the clouds", "A toy left out in the rain"], correctAnswer: "A friend or visitor who comes to your house or restaurant to eat and relax", successMsg: "Yes! The Guest is our special visitor." },
+                { instruction: "Who is the Host?", visualHTML: `<div class="text-8xl">🚪</div>`, options: ["You are! The friendly person who opens the door and says, 'We are so happy you are here!'", "Someone who locks the door and goes to sleep", "A grumpy rock in the garden"], correctAnswer: "You are! The friendly person who opens the door and says, 'We are so happy you are here!'", successMsg: "Awesome! The Host warmly welcomes everyone." },
+                { instruction: "What does a Chef do?", visualHTML: `<div class="text-8xl">👩‍🍳</div>`, options: ["They are flavor wizards who mix ingredients together to make delicious magic", "They fix broken bicycles in a garage", "They paint the roof of the house"], correctAnswer: "They are flavor wizards who mix ingredients together to make delicious magic", successMsg: "Great! Chefs are amazing flavor wizards." },
+                { instruction: "Where does the Chef work?", visualHTML: `<div class="text-8xl">🍳</div>`, options: ["In a busy, shiny, wonderful workshop called a Kitchen", "At the bottom of the swimming pool", "Inside a dark cave"], correctAnswer: "In a busy, shiny, wonderful workshop called a Kitchen", successMsg: "Perfect! The Kitchen is the Chef's magic workshop." }
+            ]},
+            { id: 2, title: "2. The Seed: Basics 2", icon: "📖", subject: "Sharing a Meal", characterId: "svg-kekeno", questions: [
+                { instruction: "What is a Restaurant?", visualHTML: `<div class="text-8xl">🏠</div>`, options: ["A giant, happy dining room where people from the whole town come to share a meal", "A quiet place where nobody is allowed to eat", "A shed for keeping lawnmowers"], correctAnswer: "A giant, happy dining room where people from the whole town come to share a meal", successMsg: "Ka pai! A Restaurant is a happy sharing house." },
+                { instruction: "How does the Chef know what to do?", visualHTML: `<div class="text-8xl">🗺️</div>`, options: ["They read a Recipe, which is a treasure map of instructions for the food", "They close their eyes and guess randomly", "They ask a puppy for directions"], correctAnswer: "They read a Recipe, which is a treasure map of instructions for the food", successMsg: "Yes! A Recipe is a treasure map for delicious food." },
+                { instruction: "What are Ingredients?", visualHTML: `<div class="text-8xl">🍎</div>`, options: ["The yummy puzzle pieces, like flour, eggs, and apples, that make up the dish", "Rocks and sticks from the driveway", "Shoes and socks from the closet"], correctAnswer: "The yummy puzzle pieces, like flour, eggs, and apples, that make up the dish", successMsg: "Awesome! Ingredients are the yummy puzzle pieces." },
+                { instruction: "What is a Menu?", visualHTML: `<div class="text-8xl">📖</div>`, options: ["A beautiful little book that tells the guests all the yummy choices they can eat", "A book of bedtime stories about dragons", "A map of the moon"], correctAnswer: "A beautiful little book that tells the guests all the yummy choices they can eat", successMsg: "Great! The Menu shows all the delicious choices." },
+                { instruction: "Why do we sit around a table?", visualHTML: `<div class="text-8xl">🍽️</div>`, options: ["Because sharing food in a circle makes everyone feel like one big family", "Because the floor is made of lava", "So we can hide our snacks from each other"], correctAnswer: "Because sharing food in a circle makes everyone feel like one big family", successMsg: "Perfect! Sitting around a table brings everyone together." }
+            ]},
+            { id: 3, title: "3. Sprout: Logic 1", icon: "🧁", subject: "Senses & Cooking", characterId: "svg-kiwi", questions: [
+                { instruction: "What is the very first thing a Chef does?", visualHTML: `<div class="text-8xl">🧼</div>`, options: ["They wash their hands with bubbly soap to keep the food perfectly clean", "They jump in a muddy puddle", "They put on winter mittens"], correctAnswer: "They wash their hands with bubbly soap to keep the food perfectly clean", successMsg: "Ka pai! Clean hands are the first rule of the kitchen." },
+                { instruction: "Why do Chefs wear aprons?", visualHTML: `<div class="text-8xl">🛡️</div>`, options: ["To give their clothes a magic shield against splashing tomato sauce!", "So they can fly through the air like a superhero", "To keep their knees warm in the snow"], correctAnswer: "To give their clothes a magic shield against splashing tomato sauce!", successMsg: "Yes! An apron is a magic shield for your clothes." },
+                { instruction: "How does food taste?", visualHTML: `<div class="text-8xl">👅</div>`, options: ["Our tongue plays detective to find out if it is sweet, salty, sour, or bitter", "Our ears listen to the plate", "Our elbows tell us the flavor"], correctAnswer: "Our tongue plays detective to find out if it is sweet, salty, sour, or bitter", successMsg: "Awesome! Your tongue is a super flavor detective." },
+                { instruction: "How do you know cookies are ready without looking?", visualHTML: `<div class="text-8xl">👃</div>`, options: ["Your nose catches the invisible, yummy smell floating in the air", "The cookies knock on the oven door", "The kitchen lights turn purple"], correctAnswer: "Your nose catches the invisible, yummy smell floating in the air", successMsg: "Great! That yummy smell tells us the cookies are ready." },
+                { instruction: "What is baking?", visualHTML: `<div class="text-8xl">🧁</div>`, options: ["Putting food into a cozy, hot oven so it puffs up, like a cake or a loaf of bread", "Putting food into the cold freezer", "Leaving a sandwich out in the rain"], correctAnswer: "Putting food into a cozy, hot oven so it puffs up, like a cake or a loaf of bread", successMsg: "Perfect! Baking puffs up cakes and bread in a cozy oven." }
+            ]},
+            { id: 4, title: "4. Sprout: Logic 2", icon: "🍝", subject: "Prep & Service", characterId: "svg-huntaway", questions: [
+                { instruction: "What happens when water gets super hot on the stove?", visualHTML: `<div class="text-8xl">🫧</div>`, options: ["It makes giant, rolling bubbles perfect for cooking pasta!", "It turns into solid ice cubes", "It disappears into a rainbow"], correctAnswer: "It makes giant, rolling bubbles perfect for cooking pasta!", successMsg: "Ka pai! Boiling water makes big rolling bubbles." },
+                { instruction: "How do carrots get so small?", visualHTML: `<div class="text-8xl">🥕</div>`, options: ["A grown-up uses a sharp tool to chop them carefully into tiny bites", "We ask the carrots politely to shrink", "A bunny nibbles them into squares"], correctAnswer: "A grown-up uses a sharp tool to chop them carefully into tiny bites", successMsg: "Yes! Grown-ups chop vegetables safely and carefully." },
+                { instruction: "What happens when you stir the bowl super fast?", visualHTML: `<div class="text-8xl">🥣</div>`, options: ["You make a mini whirlwind that blends everything perfectly", "The bowl turns into a rocket ship", "All the food freezes solid"], correctAnswer: "You make a mini whirlwind that blends everything perfectly", successMsg: "Awesome! Mixing creates a mini whirlwind in the bowl." },
+                { instruction: "Who brings the food to the table?", visualHTML: `<div class="text-8xl">💁</div>`, options: ["A super-friendly messenger called a Waiter or Server", "A mail carrier on a bicycle", "A sleepy bear from the woods"], correctAnswer: "A super-friendly messenger called a Waiter or Server", successMsg: "Great! The Waiter or Server brings our delicious food." },
+                { instruction: "How does the kitchen know what you want?", visualHTML: `<div class="text-8xl">📝</div>`, options: ["You tell the Waiter your special wish, and they write it down", "You whisper it to a houseplant", "You clap your hands three times"], correctAnswer: "You tell the Waiter your special wish, and they write it down", successMsg: "Perfect! Your Order is your special food wish." }
+            ]},
+            { id: 5, title: "5. Sprout: Logic 3", icon: "🥐", subject: "Front & Back of House", characterId: "svg-kea", questions: [
+                { instruction: "Where do the guests sit?", visualHTML: `<div class="text-8xl">🕯️</div>`, options: ["In the 'Front of House,' where there is soft music and beautiful lights", "Inside the giant pantry with the flour sacks", "On top of the kitchen roof"], correctAnswer: "In the 'Front of House,' where there is soft music and beautiful lights", successMsg: "Ka pai! Guests relax in the cozy Front of House." },
+                { instruction: "Where are the loud pots and pans?", visualHTML: `<div class="text-8xl">🥘</div>`, options: ["Hidden away in the 'Back of House,' where the busy kitchen team works", "Out on the front sidewalk", "Underneath the guest's chairs"], correctAnswer: "Hidden away in the 'Back of House,' where the busy kitchen team works", successMsg: "Yes! The Back of House is the busy kitchen engine room." },
+                { instruction: "Do we just throw the forks on the table?", visualHTML: `<div class="text-8xl">🍴</div>`, options: ["No, setting the table is a puzzle where the fork, knife, and cup have their own special spot", "Yes, we toss them like frisbees", "We hide the forks under the rug"], correctAnswer: "No, setting the table is a puzzle where the fork, knife, and cup have their own special spot", successMsg: "Awesome! Setting the table gives everything a special spot." },
+                { instruction: "What are the best magic words at the dinner table?", visualHTML: `<div class="text-8xl">✨</div>`, options: ["'Please' and 'Thank you!'", "'Abracadabra' and 'Hocus Pocus!'", "'Hurry up' and 'Give me that!'"], correctAnswer: "'Please' and 'Thank you!'", successMsg: "Great! Please and Thank you are polite magic words." },
+                { instruction: "Who wakes up before the sun to make croissants?", visualHTML: `<div class="text-8xl">🥐</div>`, options: ["The Baker, the master of flour, yeast, and sweet treats", "The firefighter driving a red truck", "The lifeguard at the beach"], correctAnswer: "The Baker, the master of flour, yeast, and sweet treats", successMsg: "Perfect! The Baker makes warm croissants and sweet treats." }
+            ]},
+            { id: 6, title: "6. Sprout: Logic 4", icon: "☕", subject: "Clean & Professional", characterId: "svg-whio", questions: [
+                { instruction: "Who makes the coffee for mom and the fluffy milk for you?", visualHTML: `<div class="text-8xl">☕</div>`, options: ["A speedy drink-wizard called a Barista", "A train conductor blowing a whistle", "A gardener with a watering can"], correctAnswer: "A speedy drink-wizard called a Barista", successMsg: "Ka pai! The Barista is a speedy drink-wizard." },
+                { instruction: "What happens when our tummies are full?", visualHTML: `<div class="text-8xl">🍽️</div>`, options: ["We help clear the empty plates to say thank you to the Chef", "We leave the plates on the floor", "We throw our napkins in the air"], correctAnswer: "We help clear the empty plates to say thank you to the Chef", successMsg: "Yes! Clearing the table helps the whole team." },
+                { instruction: "Where do the dirty plates go?", visualHTML: `<div class="text-8xl">🫧</div>`, options: ["Into a giant, zooming bubble bath machine so they are sparkling clean for tomorrow", "Into the toy box in the bedroom", "Out into the garden dirt"], correctAnswer: "Into a giant, zooming bubble bath machine so they are sparkling clean for tomorrow", successMsg: "Awesome! The Dishwasher gives plates a sparkling bubble bath." },
+                { instruction: "How do we keep tummies happy?", visualHTML: `<div class="text-8xl">🌡️</div>`, options: ["By keeping hot food super hot, and cold food super cold", "By leaving milk out in the hot sun", "By serving soup with ice cubes in it"], correctAnswer: "By keeping hot food super hot, and cold food super cold", successMsg: "Great! That is the golden temperature rule for food safety." },
+                { instruction: "Why do the kitchen workers wear matching white coats?", visualHTML: `<div class="text-8xl">🥼</div>`, options: ["So they look like a super-strong, professional team", "Because they are pretending to be snowmen", "So they can glow in the dark"], correctAnswer: "So they look like a super-strong, professional team", successMsg: "Perfect! Matching uniforms make a proud, professional team." }
+            ]},
+            { id: 7, title: "7. Stem: Advanced 1", icon: "🚜", subject: "Farm to Table & Love", characterId: "svg-tui", questions: [
+                { instruction: "Why do we put colorful vegetables on the plate?", visualHTML: `<div class="text-8xl">🥦</div>`, options: ["Because bright colors have the best zooming-fuel for your body machine", "Only to make the plate heavier to carry", "Because vegetables are good at telling jokes"], correctAnswer: "Because bright colors have the best zooming-fuel for your body machine", successMsg: "Ka pai! Colorful vegetables give your body zooming-fuel." },
+                { instruction: "Where was the potato before it became a chip?", visualHTML: `<div class="text-8xl">🚜</div>`, options: ["It was happily growing in the dirt at the farm, then rode a truck to the Chef!", "It fell down from a fluffy cloud", "It grew on top of a tall palm tree"], correctAnswer: "It was happily growing in the dirt at the farm, then rode a truck to the Chef!", successMsg: "Yes! That is the wonderful Farm to Table journey." },
+                { instruction: "Why is it good to buy apples from the farmer next door?", visualHTML: `<div class="text-8xl">🍏</div>`, options: ["Because they are super fresh and it helps our neighbors!", "Because neighbor apples can bounce like basketballs", "Because far-away apples are square"], correctAnswer: "Because they are super fresh and it helps our neighbors!", successMsg: "Awesome! Local food is fresh and helps our community." },
+                { instruction: "Does everyone eat the same food?", visualHTML: `<div class="text-8xl">🌎</div>`, options: ["No! Every country has its own magical recipes, like pizza, sushi, or tacos", "Yes, everyone in the world only eats plain toast", "No, some people eat clouds for dinner"], correctAnswer: "No! Every country has its own magical recipes, like pizza, sushi, or tacos", successMsg: "Great! Cultural foods share the world on a plate." },
+                { instruction: "What makes Grandma's cookies taste the best?", visualHTML: `<div class="text-8xl">💖</div>`, options: ["The secret ingredient is love and care!", "She puts shiny pebbles inside them", "She bakes them with a flashlight"], correctAnswer: "The secret ingredient is love and care!", successMsg: "Perfect! Love and care make every dish taste special." }
+            ]},
+            { id: 8, title: "8. Stem: Advanced 2", icon: "🎨", subject: "Teamwork & Food Art", characterId: "svg-ruru", questions: [
+                { instruction: "How do you throw a wedding or a giant birthday?", visualHTML: `<div class="text-8xl">🎈</div>`, options: ["An Event Planner draws a map of the balloons, the music, and the giant cake", "Everyone just shows up with no cake and no chairs", "You ask a squirrel to bring the balloons"], correctAnswer: "An Event Planner draws a map of the balloons, the music, and the giant cake", successMsg: "Ka pai! Event Planners organize the big celebration." },
+                { instruction: "Does the Chef cook everything alone?", visualHTML: `<div class="text-8xl">🤝</div>`, options: ["No, it is a giant team! One person chops, one person stirs, and one person plates", "Yes, nobody else is allowed in the kitchen", "No, a friendly octopus cooks all the meals"], correctAnswer: "No, it is a giant team! One person chops, one person stirs, and one person plates", successMsg: "Yes! The kitchen Brigade works together as a team." },
+                { instruction: "Why is the kitchen so loud?", visualHTML: `<div class="text-8xl">📢</div>`, options: ["Because everyone has to use a brave, loud voice to say 'Hot pan behind you!' to stay safe", "Because they are having a shouting contest", "Because the pots and pans are singing opera"], correctAnswer: "Because everyone has to use a brave, loud voice to say 'Hot pan behind you!' to stay safe", successMsg: "Awesome! Clear communication keeps everyone safe." },
+                { instruction: "Does the Chef just dump the food on the plate?", visualHTML: `<div class="text-8xl">🎨</div>`, options: ["No, they arrange it beautifully like a painting so your eyes can enjoy it first", "Yes, they toss it from across the room", "They stack it all under the plate"], correctAnswer: "No, they arrange it beautifully like a painting so your eyes can enjoy it first", successMsg: "Great! Beautiful plating is delicious food art." },
+                { instruction: "What does the Chef do with the tops of the carrots?", visualHTML: `<div class="text-8xl">🍲</div>`, options: ["They don't throw them away; they use them to make yummy soup!", "They throw them at the ceiling", "They use them as paintbrushes"], correctAnswer: "They don't throw them away; they use them to make yummy soup!", successMsg: "Perfect! Zero waste means using every yummy part." }
+            ]},
+            { id: 9, title: "9. Stem: Advanced 3", icon: "🚚", subject: "Care, Swaps & Gratitude", characterId: "svg-takahe", questions: [
+                { instruction: "What happens to the leftover eggshells?", visualHTML: `<div class="text-8xl">🪱</div>`, options: ["They go into the compost bin to feed the garden worms", "We glue them back together again", "We send them to the moon"], correctAnswer: "They go into the compost bin to feed the garden worms", successMsg: "Ka pai! Composting feeds the soil and garden worms." },
+                { instruction: "What if a guest's tummy doesn't like peanuts?", visualHTML: `<div class="text-8xl">🦸</div>`, options: ["The Chef acts like a superhero and makes sure absolutely no peanuts get on their plate", "The Chef hides peanuts under their lettuce", "The guest has to eat outside in the rain"], correctAnswer: "The Chef acts like a superhero and makes sure absolutely no peanuts get on their plate", successMsg: "Yes! Taking care of allergies keeps every guest safe." },
+                { instruction: "If someone can't drink cow's milk, what does the Barista do?", visualHTML: `<div class="text-8xl">🥛</div>`, options: ["They do a clever swap and use yummy oat milk instead!", "They give them an empty cup with nothing in it", "They pour pickle juice in the coffee"], correctAnswer: "They do a clever swap and use yummy oat milk instead!", successMsg: "Awesome! Clever substitutions make sure everyone gets a treat." },
+                { instruction: "What is a Food Truck?", visualHTML: `<div class="text-8xl">🚚</div>`, options: ["A mini-kitchen on wheels that drives to the park to share food in the sunshine", "A truck made completely out of giant loaves of bread", "A dump truck that carries rocks"], correctAnswer: "A mini-kitchen on wheels that drives to the park to share food in the sunshine", successMsg: "Great! A Food Truck brings the kitchen to the park." },
+                { instruction: "Why do people leave extra coins on the table?", visualHTML: `<div class="text-8xl">🪙</div>`, options: ["It is a special way to say a giant 'Thank You' for the wonderful service", "Because their pockets had holes in them", "To weigh down the tablecloth so it won't float away"], correctAnswer: "It is a special way to say a giant 'Thank You' for the wonderful service", successMsg: "Perfect! A Tip is an extra thank you for great care." }
+            ]},
+            { id: 10, title: "10. Bloom: Master Host", icon: "👑", subject: "The Master of Hospitality", characterId: "svg-kakapo", questions: [
+                { instruction: "If you opened a restaurant, what would you call it and what would you serve?", visualHTML: `<div class="text-8xl">🥞</div>`, options: ["I would call it 'The Happy Pancake' and serve purple pancakes!", "I would call it 'The Grumpy Cave' and serve cold rocks", "I would keep the doors locked and serve nothing"], correctAnswer: "I would call it 'The Happy Pancake' and serve purple pancakes!", successMsg: "Ka pai! The Happy Pancake sounds like the best restaurant ever!" },
+                { instruction: "What is a Signature Dish?", visualHTML: `<div class="text-8xl">🌟</div>`, options: ["The one special, magical recipe that you cook better than anyone else in the world", "A plate that you write your name on with a crayon", "A dish that nobody is allowed to eat"], correctAnswer: "The one special, magical recipe that you cook better than anyone else in the world", successMsg: "Yes! Your Signature Dish is your special culinary masterpiece." },
+                { instruction: "Is it scary to try a weird green vegetable?", visualHTML: `<div class="text-8xl">🥗</div>`, options: ["No! It is an adventure for your tongue. You might just find your new favorite food", "Yes, green vegetables will make you turn into a frog", "Yes, you should always hide under the chair"], correctAnswer: "No! It is an adventure for your tongue. You might just find your new favorite food", successMsg: "Awesome! Trying new flavors is a brave adventure." },
+                { instruction: "What is the most important rule of Hospitality?", visualHTML: `<div class="text-8xl">👑</div>`, options: ["Treat every single guest like they are the most important person in the world", "Eat all the food before the guests arrive", "Make the guests wash all the pots and pans"], correctAnswer: "Treat every single guest like they are the most important person in the world", successMsg: "Great! That is the Golden Rule of Hospitality." },
+                { instruction: "Who has the magic power to turn hungry, tired people into happy, smiling friends?", visualHTML: `<div class="text-8xl">🎓</div>`, options: ["I do! Because I am a master of hospitality", "Only a magic dragon in a storybook", "Nobody, it is impossible"], correctAnswer: "I do! Because I am a master of hospitality", successMsg: "Perfect! You are a wonderful Master of Hospitality!" }
+            ]}
+        ];
+
+        function sanitizeForSpeech(text) {
+            if (!text) return "";
+            let safeText = text;
+            
+            // Translate Te Reo Māori phrases for English TTS engines while preserving native
+            // English lexical words ("Hospitality", "Barista", "Ingredients", "Signature") intact.
+            const dictionary = {
+                "Kia ora": "Hello", 
+                "Pīwakawaka": "Fantail bird", 
+                "Ka pai": "Good job", 
+                "Tino Pai Rawa Atu": "Excellent", 
+                "Kekeno": "New Zealand fur seal"
+            };
+            
+            for (const [key, value] of Object.entries(dictionary)) {
+                const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                safeText = safeText.replace(
+                    new RegExp(`(^|[^a-zA-ZāēīōūĀĒĪŌŪ])(${escapedKey})(?=[^a-zA-ZāēīōūĀĒĪŌŪ]|$)`, "gi"),
+                    `$1${value}`
+                );
+            }
+
+            // Normalize em-dashes, en-dashes, and semicolons to a natural comma pause
+            safeText = safeText.replace(/\s*[—–;]\s*/g, ", ");
+
+            // Strip decorative single quotes wrapping words or phrases (e.g., 'Front of House,')
+            // while preserving apostrophes inside contractions (e.g., don't, Grandma's, can't, guest's).
+            safeText = safeText.replace(/(^|[^a-zA-Z])'([^']+)'(?=[^a-zA-Z]|$)/g, "$1$2");
+
+            return safeText.trim();
+        }
+
+        let activeUtterance = null;
+        let speechTimeout = null;
+        let speechFallbackTimer = null;
+        let currentSpeechSession = 0;
+
+        function clearAllTtsHighlights() {
+            document.querySelectorAll('.tts-active').forEach(el => el.classList.remove('tts-active'));
+        }
+
+        function stopSpeech() {
+            currentSpeechSession++;
+            if (speechTimeout) {
+                clearTimeout(speechTimeout);
+                speechTimeout = null;
+            }
+            if (speechFallbackTimer) {
+                clearTimeout(speechFallbackTimer);
+                speechFallbackTimer = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            clearAllTtsHighlights();
+            activeUtterance = null;
+        }
+
+        function speak(text, onEndCallback = null, highlightTarget = null) {
+            if (!('speechSynthesis' in window)) {
+                if (typeof onEndCallback === 'function') setTimeout(onEndCallback, 1200);
+                return;
+            }
+
+            stopSpeech();
+            const sessionId = currentSpeechSession;
+
+            speechTimeout = setTimeout(() => {
+                if (sessionId !== currentSpeechSession) return;
+                if (!currentVoice) loadVoices();
+
+                // Fix WebKit/Chrome bug where speechSynthesis can get stuck in a paused state
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                }
+
+                const cleanText = sanitizeForSpeech(text);
+                // Split multi-sentence text into individual sentence chunks so we can insert
+                // a gentle "storyteller breath pause" between sentences for 4-to-6-year-olds.
+                const rawChunks = cleanText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [cleanText];
+                const chunks = rawChunks.map(c => c.trim()).filter(Boolean);
+
+                const pacing = SpeechPacing.current;
+                let callbackFired = false;
+
+                // Determine which element to highlight during speech
+                const activeBox = highlightTarget || (GameState.currentScreen === 'level' ? document.getElementById('instruction-box') : null);
+
+                const finishAll = () => {
+                    if (sessionId !== currentSpeechSession) return;
+                    if (speechFallbackTimer) {
+                        clearTimeout(speechFallbackTimer);
+                        speechFallbackTimer = null;
+                    }
+                    clearAllTtsHighlights();
+                    activeUtterance = null;
+                    if (!callbackFired && typeof onEndCallback === 'function') {
+                        callbackFired = true;
+                        onEndCallback();
+                    }
+                };
+
+                // Rate-adjusted safety fallback timer in case a browser suppresses onend
+                if (typeof onEndCallback === 'function') {
+                    const wordCount = cleanText.split(/\s+/).length;
+                    const msPerWord = Math.round(520 / pacing.rate);
+                    const totalPauseMs = Math.max(0, chunks.length - 1) * pacing.pauseMs;
+                    const estimatedDurationMs = Math.max(2600, wordCount * msPerWord + totalPauseMs + 1000);
+                    speechFallbackTimer = setTimeout(finishAll, estimatedDurationMs);
+                }
+
+                let chunkIndex = 0;
+                const speakNextChunk = () => {
+                    if (sessionId !== currentSpeechSession) return;
+                    if (chunkIndex >= chunks.length) {
+                        finishAll();
+                        return;
+                    }
+
+                    const utterance = new SpeechSynthesisUtterance(chunks[chunkIndex]);
+                    activeUtterance = utterance;
+                    if (currentVoice) utterance.voice = currentVoice;
+
+                    // Gentle storytime rate + slightly warm pitch for 4-to-6-year-old engagement
+                    utterance.rate = pacing.rate;
+                    utterance.pitch = 1.04;
+
+                    if (activeBox && chunkIndex === 0) {
+                        utterance.onstart = () => {
+                            if (sessionId === currentSpeechSession) activeBox.classList.add('tts-active');
+                        };
+                    }
+
+                    utterance.onend = () => {
+                        if (sessionId !== currentSpeechSession) return;
+                        chunkIndex++;
+                        if (chunkIndex < chunks.length) {
+                            // Natural storyteller breathing pause between sentences
+                            speechTimeout = setTimeout(speakNextChunk, pacing.pauseMs);
+                        } else {
+                            finishAll();
+                        }
+                    };
+
+                    utterance.onerror = () => {
+                        if (sessionId !== currentSpeechSession) return;
+                        finishAll();
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                };
+
+                speakNextChunk();
+            }, 45);
+        }
+
+        function burstCulinaryConfetti(x, y) {
+            const symbols = ['🥐', '🧁', '🍓', '🍳', '🥞', '✨', '💖'];
+            for (let i = 0; i < 25; i++) {
+                let particle = document.createElement('div');
+                particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                particle.className = 'particle text-4xl drop-shadow-md';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 80 + Math.random() * 160;
+                particle.style.setProperty('--tx', `calc(-50% + ${Math.cos(angle) * velocity}px)`);
+                particle.style.setProperty('--ty', `calc(-50% + ${Math.sin(angle) * velocity}px)`);
+                particle.style.setProperty('--rot', `${Math.random() * 360}deg`);
+                
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 900);
+            }
+        }
+
+        function renderHub() {
+            const container = document.getElementById('map-nodes');
+            container.innerHTML = '';
+            levelsData.forEach((level) => {
+                const isLocked = level.id > GameState.unlockedLevel;
+                const btn = document.createElement('button');
+                btn.className = `game-btn p-5 sm:p-7 rounded-3xl border-4 border-white text-left flex items-center gap-4 sm:gap-6 w-full ${isLocked ? 'bg-stone-200 level-locked text-stone-400' : 'bg-white hover:bg-amber-50 shadow-lg'}`;
+                btn.innerHTML = `<div class="text-5xl sm:text-6xl drop-shadow-md">${isLocked ? '🔒' : level.icon}</div><div class="flex-1 min-w-0"><div class="font-black text-xl sm:text-3xl text-stone-800 truncate serif-heading">${level.title}</div><div class="text-base sm:text-lg font-extrabold uppercase tracking-wider mt-1 ${isLocked ? 'text-stone-400' : 'text-amber-700'}">${isLocked ? 'Locked' : level.subject}</div></div>`;
+                if (!isLocked) btn.onclick = () => loadLevel(level);
+                container.appendChild(btn);
+            });
+        }
+
+        function loadLevel(level, isNextQuestion = false) {
+            GameState.currentLevelObj = level;
+            GameState.currentScreen = 'level';
+            GameState.isTransitioning = false;
+            hideLoadingOverlayImmediate();
+            
+            if (!isNextQuestion) {
+                GameState.currentQuestionIndex = 0;
+                document.getElementById('screen-hub').classList.replace('slide-in-right', 'slide-out-left');
+                document.getElementById('screen-level').classList.replace('slide-out-right', 'slide-in-right');
+            }
+            
+            const currentQ = level.questions[GameState.currentQuestionIndex];
+            
+            const progressContainer = document.getElementById('level-progress');
+            progressContainer.innerHTML = '';
+            for (let i = 0; i < level.questions.length; i++) {
+                const star = document.createElement('span');
+                star.innerText = '⭐';
+                star.className = `text-xl sm:text-2xl drop-shadow-sm ${i <= GameState.currentQuestionIndex ? 'star-filled text-amber-400' : 'star-empty text-stone-300'}`;
+                progressContainer.appendChild(star);
+            }
+            
+            document.getElementById('level-instruction').innerText = currentQ.instruction;
+            document.getElementById('level-visual').innerHTML = currentQ.visualHTML;
+            document.getElementById('level-character').innerHTML = document.getElementById(level.characterId).innerHTML;
+            document.getElementById('level-character').className = 'animate-float';
+
+            const optionsContainer = document.getElementById('level-options');
+            optionsContainer.innerHTML = '';
+            
+            const colors = [
+                'bg-amber-100 border-amber-300 text-amber-950',
+                'bg-rose-100 border-rose-300 text-rose-950',
+                'bg-emerald-100 border-emerald-300 text-emerald-950'
+            ];
+            currentQ.options.forEach((opt, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-stretch gap-2 sm:gap-3 w-full';
+
+                const btn = document.createElement('button');
+                btn.className = `option-answer-btn game-btn ${colors[idx % colors.length]} hover:brightness-95 font-extrabold text-lg sm:text-3xl py-4 px-5 sm:py-6 sm:px-8 rounded-3xl border-4 flex-1 h-auto min-h-[84px] sm:min-h-[92px] whitespace-normal break-words leading-snug flex items-center justify-center shadow-lg relative overflow-hidden text-center`;
+                btn.innerHTML = `<span class="relative z-10">${opt}</span>`;
+                btn.onclick = () => checkAnswer(opt, level, btn);
+
+                const ttsOptionBtn = document.createElement('button');
+                ttsOptionBtn.type = 'button';
+                ttsOptionBtn.className = 'option-tts-btn game-btn bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-900 rounded-3xl border-4 px-3.5 sm:px-5 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shrink-0';
+                ttsOptionBtn.title = 'Listen to this answer';
+                ttsOptionBtn.setAttribute('aria-label', 'Listen to option: ' + opt);
+                ttsOptionBtn.innerText = '🔊';
+                ttsOptionBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    // QA Fix: Prevent interrupting post-answer congratulatory speech & transition callback
+                    if (GameState.isTransitioning) return;
+                    speak(opt, null, btn);
+                };
+
+                row.appendChild(btn);
+                row.appendChild(ttsOptionBtn);
+                optionsContainer.appendChild(row);
+            });
+            
+            document.getElementById('level-playarea').scrollTop = 0;
+
+            // Automatically read the question aloud when the question loads
+            speak(currentQ.instruction, null, document.getElementById('instruction-box'));
+        }
+
+        function checkAnswer(selected, level, btnElement) {
+            if (GameState.isTransitioning) return;
+
+            const currentQ = level.questions[GameState.currentQuestionIndex];
+            const allAnswerBtns = document.getElementById('level-options').querySelectorAll('.option-answer-btn');
+            const allTtsBtns = document.getElementById('level-options').querySelectorAll('.option-tts-btn');
+            
+            if (selected === currentQ.correctAnswer) {
+                GameState.isTransitioning = true;
+                SoundManager.playSuccess();
+                allAnswerBtns.forEach(b => b.disabled = true);
+                allTtsBtns.forEach(b => b.disabled = true);
+                
+                btnElement.className = "option-answer-btn game-btn bg-emerald-600 border-emerald-700 text-white font-extrabold text-lg sm:text-3xl py-4 px-5 sm:py-6 sm:px-8 rounded-3xl border-4 flex-1 scale-[1.02] sm:scale-[1.03] h-auto min-h-[84px] sm:min-h-[92px] whitespace-normal break-words leading-snug flex items-center justify-center z-10 transition-transform duration-300 shadow-2xl text-center";
+                
+                const rect = btnElement.getBoundingClientRect();
+                burstCulinaryConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                
+                document.getElementById('level-character').classList.replace('animate-float', 'animate-bounce-fast');
+
+                // Wait for the success message speech to complete before transitioning or opening modals
+                speak(currentQ.successMsg, () => {
+                    if (GameState.currentScreen !== 'level') return;
+
+                    if (GameState.currentQuestionIndex < level.questions.length - 1) {
+                        const loader = document.getElementById('loading-overlay');
+                        loader.classList.remove('hidden');
+                        loader.classList.add('pointer-events-auto');
+                        setTimeout(() => loader.classList.remove('opacity-0'), 10);
+                        
+                        loaderTimeoutId = setTimeout(() => {
+                            if (GameState.currentScreen !== 'level') {
+                                hideLoadingOverlayImmediate();
+                                return;
+                            }
+                            GameState.currentQuestionIndex++; 
+                            loadLevel(level, true);
+                        }, 900); 
+                    } else {
+                        GameState.isTransitioning = false;
+                        if (level.id === 10) { 
+                            const modal = document.getElementById('modal-finale');
+                            modal.classList.remove('hidden'); 
+                            document.getElementById('finale-box').classList.remove('scale-90');
+                            speak("Tino Pai Rawa Atu! You are a Master Host and Flavor Wizard!");
+                        } else {
+                            const modal = document.getElementById('modal-success');
+                            modal.classList.remove('hidden'); 
+                            document.getElementById('success-box').classList.remove('scale-90');
+                            speak("Ka pai! Delicious job!");
+                            if (GameState.unlockedLevel === level.id) GameState.unlockedLevel++;
+                        }
+                    }
+                }, btnElement);
+            } else {
+                SoundManager.playError();
+                
+                const originalClass = btnElement.className;
+                btnElement.className = "option-answer-btn game-btn bg-rose-600 border-rose-700 text-white font-extrabold text-lg sm:text-3xl py-4 px-5 sm:py-6 sm:px-8 rounded-3xl border-4 flex-1 h-auto min-h-[84px] sm:min-h-[92px] whitespace-normal break-words leading-snug flex items-center justify-center shadow-lg text-center";
+                
+                setTimeout(() => {
+                    if (!GameState.isTransitioning) btnElement.className = originalClass;
+                }, 600);
+
+                const charEl = document.getElementById('level-character');
+                charEl.classList.remove('animate-float');
+                void charEl.offsetWidth; 
+                charEl.classList.add('error-shake');
+                setTimeout(() => { charEl.classList.remove('error-shake'); charEl.classList.add('animate-float'); }, 400);
+
+                speak("Not quite! Taste the clues and try again. " + currentQ.instruction, null, document.getElementById('instruction-box'));
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('btn-back')?.addEventListener('click', () => {
+                GameState.currentScreen = 'hub';
+                GameState.isTransitioning = false;
+                hideLoadingOverlayImmediate();
+                document.getElementById('screen-level').classList.replace('slide-in-right', 'slide-out-right');
+                document.getElementById('screen-hub').classList.replace('slide-out-left', 'slide-in-right');
+                stopSpeech();
+                renderHub();
+            });
+            
+            document.getElementById('btn-next')?.addEventListener('click', () => {
+                stopSpeech();
+                document.getElementById('success-box').classList.add('scale-90');
+                setTimeout(() => document.getElementById('modal-success').classList.add('hidden'), 200);
+                document.getElementById('btn-back').click();
+            });
+
+            document.getElementById('btn-restart')?.addEventListener('click', () => {
+                stopSpeech();
+                document.getElementById('finale-box').classList.add('scale-90');
+                setTimeout(() => document.getElementById('modal-finale').classList.add('hidden'), 200);
+                GameState.unlockedLevel = 1;
+                document.getElementById('btn-back').click();
+            });
+            
+            document.getElementById('btn-speech')?.addEventListener('click', () => {
+                if (GameState.isTransitioning) return;
+                if (GameState.currentScreen === 'hub') speak(document.getElementById('hub-instruction').innerText);
+                else if (GameState.currentScreen === 'level') speak(GameState.currentLevelObj.questions[GameState.currentQuestionIndex].instruction, null, document.getElementById('instruction-box'));
+            });
+
+            document.getElementById('btn-speed')?.addEventListener('click', () => {
+                const mode = SpeechPacing.cycle();
+                document.getElementById('speed-icon').innerText = mode.icon;
+                document.getElementById('speed-label').innerText = mode.label;
+                document.getElementById('btn-speed').title = mode.title;
+
+                // Do not interrupt active post-answer transition callback if currently celebrating a right answer
+                if (GameState.isTransitioning) return;
+
+                // Immediately preview the new speed on the current screen's active prompt
+                if (GameState.currentScreen === 'hub') {
+                    speak(document.getElementById('hub-instruction').innerText);
+                } else if (GameState.currentScreen === 'level' && GameState.currentLevelObj) {
+                    speak(GameState.currentLevelObj.questions[GameState.currentQuestionIndex].instruction, null, document.getElementById('instruction-box'));
+                }
+            });
+
+            document.getElementById('instruction-box')?.addEventListener('click', () => {
+                if (GameState.isTransitioning) return;
+                if (GameState.currentScreen === 'level' && GameState.currentLevelObj) {
+                    speak(GameState.currentLevelObj.questions[GameState.currentQuestionIndex].instruction, null, document.getElementById('instruction-box'));
+                }
+            });
+            
+            document.getElementById('btn-educator')?.addEventListener('click', () => {
+                if (!GameState.isTransitioning) stopSpeech();
+                document.getElementById('modal-educator').classList.remove('hidden');
+                setTimeout(() => document.getElementById('educator-box').classList.remove('scale-90'), 10);
+            });
+            
+            document.getElementById('btn-close-educator')?.addEventListener('click', () => {
+                if (!GameState.isTransitioning) stopSpeech();
+                document.getElementById('educator-box').classList.add('scale-90');
+                setTimeout(() => document.getElementById('modal-educator').classList.add('hidden'), 200);
+            });
+            
+            document.getElementById('btn-music')?.addEventListener('click', () => SoundManager.toggleMusic());
+            document.body.addEventListener('click', (e) => {
+                const btn = e.target.closest('.game-btn');
+                if (btn && btn.id !== 'btn-music' && btn.id !== 'btn-speech' && btn.id !== 'btn-speed') {
+                    SoundManager.playClick();
+                }
+            });
+            
+            renderHub();
+        };
+    </script>
+</body>
+</html>
